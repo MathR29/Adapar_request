@@ -1,4 +1,27 @@
 import requests
+from bs4 import BeautifulSoup
+
+def get_class_id(class_):
+    class_dict = {
+        "herbicida": "9",
+        "fungicida": "8",
+        "inseticida": "10",
+        "nematicida": "11"
+    }
+    return class_dict[class_]
+
+def get_crop_id(crop):
+    crop_dict = {
+        "soja": "531",
+        "milho": "428",
+        "trigo": "560",
+        "sorgo": "533",
+        "mandioca": "405",
+        "cafe": "139",
+        "feijao": "292",
+        "pastagem": "701"
+    }
+    return crop_dict[crop]
 
 def adapar_requets(cultura,classe):
 
@@ -6,15 +29,27 @@ def adapar_requets(cultura,classe):
 
     payload = {
         "criterioClasse": classe,
-        "criterioCulturaInfestada": cultura
+        "criterioCulturaInfestada": cultura,
+        "select8": get_class_id(classe),  #Class_id
+        "select10": get_crop_id(cultura), #Cultura_id
+        "submit1": "Pesquisar"
     }
-
     response = requests.post(url = url,
                              data = payload)
+    html = BeautifulSoup(response.text, "html.parser")
+    rows = html.find_all("td")
+    products_list = []
 
-    print(response.status_code)
-
-    return print(response.text)
-
-
-adapar_requets("Milho","Herbicida")
+    for i in range(0,len(rows),4):
+        try:
+            products_list.append({
+                "Produto": rows[i].getText(strip = True),
+                "Marca": rows[i+3].getText(strip = True),
+                "Situacao": rows[i+1].getText(strip = True),
+		        "Toxicidade": rows[i+2].getText(strip = True),
+            })
+            #print(products_list[i])
+        except:
+            print("###################PULANDO############################")
+            continue
+    return products_list
