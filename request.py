@@ -24,9 +24,7 @@ def get_crop_id(crop):
     return crop_dict[crop]
 
 def adapar_requets(cultura,classe):
-
     url = "https://celepar07web.pr.gov.br/agrotoxicos/resultadoPesquisa.asp"
-
     payload = {
         "criterioClasse": classe,
         "criterioCulturaInfestada": cultura,
@@ -39,7 +37,6 @@ def adapar_requets(cultura,classe):
     html = BeautifulSoup(response.text, "html.parser")
     rows = html.find_all("td")
     products_list = []
-
     for i in range(0,len(rows),4):
         try:
             products_list.append({
@@ -48,8 +45,7 @@ def adapar_requets(cultura,classe):
                 "Situacao": rows[i+1].getText(strip = True),
 		        "Toxicidade": rows[i+2].getText(strip = True),
             })
-            #print(products_list[i])
         except:
-            print("###################PULANDO############################")
+            print("Something went wrong.")
             continue
     return products_list
