@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse,parse_qs
 
 def get_class_id(class_):
     class_dict = {
@@ -36,16 +37,37 @@ def adapar_requets(cultura,classe):
                              data = payload)
     html = BeautifulSoup(response.text, "html.parser")
     rows = html.find_all("td")
+    links = html.find_all("a")
+    products_id_list = []
     products_list = []
+    for link in links:
+        href = link.get("href")
+        try:
+            name = link.text.strip()
+            query = href.split("?")[1]
+            parms = parse_qs(query)
+            cod = parms.get("Cod",[None])[0]
+            products_id_list.append({
+                "Produto": name,
+                "Cod": cod
+            })
+        except:
+            continue
+    
+
     for i in range(0,len(rows),4):
         try:
             products_list.append({
                 "Produto": rows[i].getText(strip = True),
-                "Marca": rows[i+3].getText(strip = True),
-                "Situacao": rows[i+1].getText(strip = True),
-		        "Toxicidade": rows[i+2].getText(strip = True),
-            })
+                #"Marca": rows[i+3].getText(strip = True),
+                #"Situacao": rows[i+1].getText(strip = True),
+	            #"Toxicidade": rows[i+2].getText(strip = True)
+    })
         except:
-            print("Something went wrong.")
-            continue
-    return products_list
+                print("Something went wrong.")
+                continue
+    print(len(products_list))
+    print("#####################################################################")
+    return print(len(products_id_list))
+
+adapar_requets("soja","herbicida")
