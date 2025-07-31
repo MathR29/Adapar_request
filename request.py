@@ -85,7 +85,16 @@ def get_product_pdf_link(cod,cultura,classe):
         text = link.getText(strip=True)
         if text.endswith(".pdf"):
             return text
-        
+
+def download_pdf(pdf_url,product_name):
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(pdf_url, headers = headers).content
+    
+    file = product_name + ".pdf"
+    print(file)
+    with open(file, "wb") as f:
+        f.write(response)
+
 
 def adapar_requets(cultura,classe):
     url = "https://celepar07web.pr.gov.br/agrotoxicos/resultadoPesquisa.asp"
@@ -131,4 +140,6 @@ def adapar_requets(cultura,classe):
     return merged
 
 
-get_product_pdf_link(i,"mandioca","fungicida")
+print(get_product_pdf_link(23,"mandioca","fungicida"))
+
+download_pdf(pdf_url="https://www.adapar.pr.gov.br/sites/adapar/arquivos_restritos/files/documento/2020-10/afalon_sc_191020.pdf",product_name="afalon")
