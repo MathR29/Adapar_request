@@ -27,19 +27,13 @@ def get_crop_id(crop):
 def merge_dicts(dict1,dict2):
     map_dict1_marca = dict(zip(dict1["Produto"],
                                dict1["Marca"]))
-
     map_dict1_sit = dict(zip(dict1["Produto"],
                                dict1["Situacao"]))
-
     map_dict1_tox = dict(zip(dict1["Produto"],
                                dict1["Toxicidade"]))
-
     map_dict2 = dict(zip(dict2["Produto"],
-                         dict2["Cod"]))
-    
+                         dict2["Cod"])) 
     all_products = set(dict1["Produto"]) & set(dict2["Produto"])
-
-
     merged = {}
     for product in all_products:
         merged[product] = {
@@ -50,6 +44,48 @@ def merge_dicts(dict1,dict2):
         }
     return merged
 
+def get_product_pdf_link(cod,cultura,classe):
+    url = "https://celepar07web.pr.gov.br/agrotoxicos/listar.asp"
+    querry = {
+        "Cod": f"{cod}",
+        "descIngrediente": "",
+        "CodIngredienteAtivo": "null",
+        "CodFormulacao": "null",
+        "IdRegistrante": "null",
+        "CodFormaAcao": "null",
+        "CodAlvo": "null",
+        "CodGrupoQuimico": "null",
+        "CodClassToxicologica": "null",
+        "CodSituacao": "null",
+        "CodClassificacao": get_class_id(classe),
+        "CodEspecie": get_crop_id(cultura),
+        "CodAgrotoxico": "null",
+        "NumeroRegistro": "null",
+        "expurgo": "null",
+        "aplica": "null",
+        "tratam": "null",
+        "ClassificacaoQuiBio": "null",
+        "criterioAgrotoxico": "",
+        "criterioIngredienteAtivo": "",
+        "criterioRegistrante": "",
+        "criterioClassificacaoToxicologica": "",
+        "criterioPraga": "",
+        "criterioSituacao": "",
+        "criterioClasse": classe,
+        "criterioCulturaInfestada": cultura,
+        "criterioExpurgo": "",
+        "criterioAplicacaoAerea": "",
+        "criterioTratamentoSementes": ""
+    }
+
+    response = requests.get(url = url, params = querry).text
+    soup = BeautifulSoup(response, 'html.parser')
+    links = soup.find_all("a")
+    for link in links:
+        text = link.getText(strip=True)
+        if text.endswith(".pdf"):
+            return text
+        
 
 def adapar_requets(cultura,classe):
     url = "https://celepar07web.pr.gov.br/agrotoxicos/resultadoPesquisa.asp"
@@ -82,8 +118,6 @@ def adapar_requets(cultura,classe):
             products_id_list["Cod"].append(cod)
         except:
             continue
-    
-
     for i in range(0,len(rows),4):
         try:
             products_list["Produto"].append(rows[i].getText(strip = True))
@@ -94,6 +128,7 @@ def adapar_requets(cultura,classe):
                 print("Something went wrong.")
                 continue
     merged = merge_dicts(dict1=products_list,dict2=products_id_list)
-    return print(sorted(merged.items()))
+    return merged
 
-adapar_requets("mandioca","herbicida")
+
+get_product_pdf_link(i,"mandioca","fungicida")
