@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse,parse_qs
+import os
 
 def get_class_id(class_):
     class_dict = {
@@ -78,25 +79,38 @@ def get_product_pdf_link(cod,cultura,classe):
         "criterioTratamentoSementes": ""
     }
 
-    response = requests.get(url = url, params = querry).text
-    soup = BeautifulSoup(response, 'html.parser')
+    response = requests.get(url = url, 
+                            params = querry).text
+    soup = BeautifulSoup(response, 
+                         'html.parser')
     links = soup.find_all("a")
     for link in links:
         text = link.getText(strip=True)
         if text.endswith(".pdf"):
             return text
 
-def download_pdf(pdf_url,product_name):
+def download_pdf(cod,cultura,classe,product_name):
+    pdf_url = get_product_pdf_link(cod,
+                                   cultura,
+                                   classe)
     headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(pdf_url, headers = headers).content
-    
-    file = product_name + ".pdf"
-    print(file)
-    with open(file, "wb") as f:
-        f.write(response)
-
+    response = requests.get(pdf_url, 
+                            headers = headers).content 
+    try:
+        os.mkdir("products_pdfs/")
+    except:
+        pass
+    file = f"products_pdfs/{product_name.replace(" ","_")}.pdf"
+    if os.path.exists(file):
+        print(f"{file} already exists")
+    else:
+        print(f"Downloading {product_name} pdf")
+        with open(file, "wb") as f:
+            f.write(response)
 
 def adapar_requets(cultura,classe):
+    cultura = input("Cultura: ")
+    classe = input("Classe do produto: ")
     url = "https://celepar07web.pr.gov.br/agrotoxicos/resultadoPesquisa.asp"
     payload = {
         "criterioClasse": classe,
@@ -107,7 +121,8 @@ def adapar_requets(cultura,classe):
     }
     response = requests.post(url = url,
                              data = payload)
-    html = BeautifulSoup(response.text, "html.parser")
+    html = BeautifulSoup(response.text,
+                         "html.parser")
     rows = html.find_all("td")
     links = html.find_all("a")
     products_id_list = {"Produto": [],
@@ -137,9 +152,11 @@ def adapar_requets(cultura,classe):
                 print("Something went wrong.")
                 continue
     merged = merge_dicts(dict1=products_list,dict2=products_id_list)
+    
+    for product,info in merged.items():
+        try:
+            download_pdf(info.get("Cod"),cultura,classe,product)
+        except:
+            print(f"Something went wrong while trying to download the {product} pdf")
+        
     return merged
-
-
-print(get_product_pdf_link(23,"mandioca","fungicida"))
-
-download_pdf(pdf_url="https://www.adapar.pr.gov.br/sites/adapar/arquivos_restritos/files/documento/2020-10/afalon_sc_191020.pdf",product_name="afalon")
